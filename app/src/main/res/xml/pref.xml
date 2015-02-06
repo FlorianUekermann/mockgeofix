@@ -1,0 +1,41 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:key="listen_port"
+        android:title="@string/listen_port"
+        android:defaultValue="5554"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:inputType="number"
+    />
+    <ListPreference
+        android:key="listen_ip"
+        android:title="@string/listen_ip"
+        android:defaultValue="ALL"
+    />
+    <PreferenceCategory
+        android:title="@string/pref_header_notifications"
+        android:key="pref_cat_notifications">
+        <CheckBoxPreference
+            android:key="notifications_on"
+            android:title="@string/notifications_on"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_header_security"
+        android:key="pref_cat_security">
+        <CheckBoxPreference
+            android:key="require_password"
+            android:title="@string/require_password"
+            android:summary="@string/require_password_summary"
+            android:defaultValue="false"
+        />
+        <EditTextPreference
+            android:key="password"
+            android:title="@string/password"
+            android:defaultValue=""
+            android:password="true"
+            android:dependency="require_password"
+        />
+    </PreferenceCategory>
+</PreferenceScreen>
