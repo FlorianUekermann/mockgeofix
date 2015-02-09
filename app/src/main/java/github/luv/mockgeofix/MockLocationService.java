@@ -8,18 +8,26 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import java.io.IOException;
+import java.net.BindException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.ServerSocket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.util.Enumeration;
+import java.util.Vector;
+
 public class MockLocationService extends Service implements SharedPreferences.OnSharedPreferenceChangeListener {
     String TAG = "MockLocationService";
 
     protected MockLocationThread mThread = null;
-    SharedPreferences pref = null;
+    protected SharedPreferences pref = null;
 
     public final static String STARTED = "STARTED";
     public final static String STOPPED = "STOPPED";
     public final static String ERROR = "ERROR";
-
-    protected int port = 5554;
-
     protected String lastErr;
 
     public class Binder extends android.os.Binder {
@@ -36,7 +44,6 @@ public class MockLocationService extends Service implements SharedPreferences.On
         pref = PreferenceManager.getDefaultSharedPreferences(
                 getApplicationContext());
 
-        updatePort();
         pref.registerOnSharedPreferenceChangeListener(this);
     }
 
@@ -52,27 +59,11 @@ public class MockLocationService extends Service implements SharedPreferences.On
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("listen_port")) {
-            updatePort();
-        }
-    }
-
-    protected synchronized void updatePort() {
-        if (pref == null) {return;}
-        try {
-            port = Integer.parseInt(pref.getString("listen_port", ""));
-            if (port < 0 || port > 65535) {
-                throw new NumberFormatException("Invalid port number.");
+        if (key.equals("listen_port") || key.equals("listen_ip")) {
+            if (mThread != null) {
+                mThread.rebind();
+                mThread.interrupt();
             }
-        } catch (NumberFormatException ex) {
-            String portStr = Integer.toString(port);
-            Log.e(TAG, String.format("Invalid port number %s. Defaulting to 5554", portStr));
-            errorHasOccurred(String.format("Invalid port number %s. Defaulting to 5554.",
-                    portStr));
-            port = 5554;
-        }
-        if (mThread != null) {
-            mThread.updatePort();
         }
     }
 
@@ -85,9 +76,8 @@ public class MockLocationService extends Service implements SharedPreferences.On
 
     public void start() {
         if (mThread == null) {
-            mThread = new MockLocationThread(getApplicationContext(), this);
+            mThread = new MockLocationThread(getApplicationContext(), this );
             mThread.start();
-            broadcast(STARTED);
         }
     }
 
@@ -113,6 +103,46 @@ public class MockLocationService extends Service implements SharedPreferences.On
         lastErr = err;
         broadcast(ERROR);
     }
+    protected Vector<SocketAddress> getBindAddresses() {
+        Vector<SocketAddress> ret = new Vector<>();
+
+        /* retrieve port settings from preferences */
+        String portStr = pref.getString("listen_port", "");
+        int port;
+        try {
+            port = Integer.parseInt(portStr);
+            if (port < 0 || port > 65535) {
+                throw new NumberFormatException("Invalid port number.");
+            }
+        } catch (NumberFormatException ex) {
+            Log.e(TAG, String.format("Invalid port number %s. Defaulting to 5554", portStr));
+            errorHasOccurred(String.format("Invalid port number %s. Defaulting to 5554.",
+                    portStr));
+            port = 5554;
+        }
+
+        /* retrieve interfaces to listen on, set port and return a vector of SocketAddresses */
+        String ifaceName = pref.getString("listen_ip","ALL");
+
+        if (ifaceName.equals("ALL")) {
+            ret.add( new InetSocketAddress(port) );
+            return ret;
+        }
+
+        try {
+            NetworkInterface iface = NetworkInterface.getByName(ifaceName);
+            Enumeration<InetAddress> addresses = iface.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                InetAddress address = addresses.nextElement();
+                ret.add(new InetSocketAddress(address, port));
+            }
+        } catch(SocketException ex) {
+            Log.e(TAG, "SocketException thrown (getBindAddress)");
+        } catch (NullPointerException ex) {
+            Log.e(TAG, "NullPointerException thrown (getBindAddress)");
+        }
+        return ret;
+    }
 
     /* helper methods */
     protected void broadcast(String msg) {
@@ -123,41 +153,82 @@ public class MockLocationService extends Service implements SharedPreferences.On
 }
 
 class MockLocationThread extends Thread {
-    Context mContext;
-    MockLocationService mService;
+    String TAG = "MockLocationService.Thread";
+
+    protected Context mContext;
+    protected MockLocationService mService;
+    protected Vector<SocketAddress> mBindAddresses;
 
     public MockLocationThread(Context context, MockLocationService service) {
         mContext = context;
         mService = service;
     }
-    private boolean stop = false;
+    private boolean mStop = false;
+    private boolean mRebind = false;
 
-    public void kill() {
-        stop = true;
+    public void rebind() {
+        mRebind = true;
     }
 
-    public void updatePort() {
-        // bind to the new port
+    public void kill() {
+        mStop = true;
     }
 
     @SuppressWarnings({"InfiniteLoopStatement", "EmptyCatchBlock"})
     @Override
     public void run() {
         super.run();
+        Vector<ServerSocket> ssockets = new Vector<>();
         try {
-            // bind to the tcp port and only on success call:
-            //mService.errorHasOccurred("TEST ERR");
-            mService.threadHasStartedSuccessfully();
-            while (!stop) {
-                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(mContext);
-                String port = pref.getString("listen_port", "");
-                Log.d(String.format("PORT %s", port), "running");
+            while (!mStop) {
+                mBindAddresses = mService.getBindAddresses();
+                for (SocketAddress address : mBindAddresses) {
+                    ServerSocket ss = new ServerSocket();
+                    ss.setReuseAddress(true);
+                    ss.bind(address);
+                    ssockets.add(ss);
+                }
+                mService.threadHasStartedSuccessfully();
                 try {
-                    Thread.sleep(1000, 0);
-                } catch (InterruptedException ex) {
+                    while (!mStop && !mRebind) {
+                        Log.d(TAG, "running");
+                        try {
+                            Thread.sleep(1000, 0);
+                        } catch (InterruptedException ex) {
+                        }
+                    }
+                } finally {
+                    for (ServerSocket ss : ssockets) {
+                        try {
+                            if (!ss.isClosed()) { ss.close(); }
+                        } catch (IOException e) {
+                            Log.e(TAG, e.toString());
+                        }
+                    }
+                    ssockets.clear();
                 }
             }
+        } catch (SocketException e) {
+            Log.e(TAG, e.toString() );
+            // most common errors
+            if (e.getClass() == BindException.class && e.getMessage().contains("EADDRINUSE")) {
+                mService.errorHasOccurred(mContext.getString(R.string.err_address_already_in_use));
+            } else if (e.getClass() == BindException.class && e.getMessage().contains("EACCES") ) {
+                mService.errorHasOccurred(mContext.getString(R.string.err_socket_permission_denied));
+            } else {
+                mService.errorHasOccurred(e.toString());
+            }
+        } catch (IOException e) {
+            Log.e(TAG, e.toString() );
+            mService.errorHasOccurred(e.toString());
         } finally {
+            for (ServerSocket ss : ssockets) {
+                try {
+                    if (!ss.isClosed()) { ss.close(); }
+                } catch (IOException e) {
+                    Log.e(TAG, e.toString());
+                }
+            }
             mService.threadHasStopped();
         }
     }

@@ -26,9 +26,8 @@
         \n\nPassword is provided using the following telnet command:
         \nPASSWORD &lt;password&gt;
         \nExample: PASSWORD blue-taco</b></string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
-    <string name="invalid_port">That\'s an invalid port number. Port must be a number between 0 and 65535.</string>
+
 
     <!-- main activity -->
     <string name="status">status: </string>
@@ -38,5 +37,11 @@
     <string name="stop">stop</string>
     <string name="start">start</string>
     <string name="listens_on">Listens on: </string>
+
+    <!-- errors -->
+    <string name="invalid_port">That\'s an invalid port number. Port must be a number between 0 and 65535.</string>
+    <string name="err_address_already_in_use">Binding error. Address/port already in use.</string>
+    <string name="err_socket_permission_denied">Binding error. Permission denied. (You should use port number >=1024.)</string>
+
 
 </resources>
