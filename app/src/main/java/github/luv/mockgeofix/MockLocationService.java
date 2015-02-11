@@ -9,13 +9,20 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
-import java.net.ServerSocket;
+
 import java.net.SocketAddress;
 import java.net.SocketException;
+
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -178,34 +185,43 @@ class MockLocationThread extends Thread {
     @Override
     public void run() {
         super.run();
-        Vector<ServerSocket> ssockets = new Vector<>();
         try {
             while (!mStop) {
+                Selector selector = Selector.open();
                 mBindAddresses = mService.getBindAddresses();
                 for (SocketAddress address : mBindAddresses) {
-                    ServerSocket ss = new ServerSocket();
-                    ss.setReuseAddress(true);
-                    ss.bind(address);
-                    ssockets.add(ss);
+                    ServerSocketChannel ssc = ServerSocketChannel.open();
+                    ssc.configureBlocking(false);
+                    ssc.socket().setReuseAddress(true);
+                    ssc.socket().bind(address);
+                    ssc.register(selector, SelectionKey.OP_ACCEPT);
                 }
                 mService.threadHasStartedSuccessfully();
                 try {
                     while (!mStop && !mRebind) {
                         Log.d(TAG, "running");
-                        try {
-                            Thread.sleep(1000, 0);
-                        } catch (InterruptedException ex) {
+                        selector.select();
+                        for (SelectionKey key : selector.selectedKeys()) {
+                            if (key.isAcceptable() && key.channel() instanceof ServerSocketChannel) {
+                                // accept connection
+                                SocketChannel client = ((ServerSocketChannel)key.channel()).accept();
+                                if (client != null) {
+                                    client.configureBlocking(false);
+                                    client.socket().setTcpNoDelay(true);
+                                    client.register(selector, SelectionKey.OP_READ);
+                                }
+                            }
+                            if (key.isReadable() && key.channel() instanceof SocketChannel) {
+                                onIncomingData((SocketChannel) key.channel());
+                            }
                         }
+                        selector.selectedKeys().clear();
                     }
                 } finally {
-                    for (ServerSocket ss : ssockets) {
-                        try {
-                            if (!ss.isClosed()) { ss.close(); }
-                        } catch (IOException e) {
-                            Log.e(TAG, e.toString());
-                        }
+                    for (SelectionKey key : selector.keys()) {
+                        try { key.channel().close(); } catch (IOException ignored) {}
                     }
-                    ssockets.clear();
+                    selector.close();
                 }
             }
         } catch (SocketException e) {
@@ -215,21 +231,30 @@ class MockLocationThread extends Thread {
                 mService.errorHasOccurred(mContext.getString(R.string.err_address_already_in_use));
             } else if (e.getClass() == BindException.class && e.getMessage().contains("EACCES") ) {
                 mService.errorHasOccurred(mContext.getString(R.string.err_socket_permission_denied));
-            } else {
-                mService.errorHasOccurred(e.toString());
             }
         } catch (IOException e) {
             Log.e(TAG, e.toString() );
-            mService.errorHasOccurred(e.toString());
         } finally {
-            for (ServerSocket ss : ssockets) {
-                try {
-                    if (!ss.isClosed()) { ss.close(); }
-                } catch (IOException e) {
-                    Log.e(TAG, e.toString());
-                }
-            }
             mService.threadHasStopped();
         }
+    }
+
+    void onIncomingData(SocketChannel client) {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        int bytesRead;
+        try {
+            bytesRead = client.read(buffer);
+        } catch (IOException ex) {
+            try { client.close(); } catch (IOException ignored) {}
+            return;
+        }
+        if (bytesRead == -1) {
+            try { client.close(); } catch (IOException ignored) {}
+            return;
+        }
+        try {
+            String s = new String(buffer.array(), "UTF-8");
+            Log.i(TAG, s);
+        } catch(UnsupportedEncodingException ignored) {}
     }
 }

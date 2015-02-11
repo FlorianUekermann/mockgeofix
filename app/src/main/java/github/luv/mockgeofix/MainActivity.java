@@ -54,6 +54,8 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
                     action.equals(MockLocationService.STOPPED)) {
                 MainActivity.this.updateStatus();
                 MainActivity.this.updateStartStopButton();
+                // in case an interface goes down or up
+                MainActivity.this.updateListensOn();
             }
             if (action.equals(MockLocationService.ERROR) && mService != null) {
                 Toast.makeText(getApplicationContext(), mService.getLastErr(),
