@@ -15,6 +15,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
@@ -24,6 +25,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class MockLocationService extends Service implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -173,6 +175,9 @@ class MockLocationThread extends Thread {
     private boolean mStop = false;
     private boolean mRebind = false;
 
+    private HashMap<Socket, Boolean> mClientDiscard = new HashMap<>();
+    private HashMap<Socket, ByteBuffer> mClientBuffers = new HashMap<>();
+
     public void rebind() {
         mRebind = true;
     }
@@ -240,7 +245,18 @@ class MockLocationThread extends Thread {
     }
 
     void onIncomingData(SocketChannel client) {
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        // geo nmea sentences max length is about 80 characters
+        // geo fix messages are very short as well
+        // 2048 should be enough.
+        ByteBuffer buffer = mClientBuffers.get(client.socket());
+        if (buffer == null) {
+            ByteBuffer newBuffer = ByteBuffer.allocate(2048);
+            mClientBuffers.put(client.socket(), newBuffer);
+            mClientDiscard.put(client.socket(), Boolean.FALSE);
+            buffer = newBuffer;
+        }
+
+        /* read new data into buffer */
         int bytesRead;
         try {
             bytesRead = client.read(buffer);
@@ -252,9 +268,73 @@ class MockLocationThread extends Thread {
             try { client.close(); } catch (IOException ignored) {}
             return;
         }
-        try {
-            String s = new String(buffer.array(), "UTF-8");
-            Log.i(TAG, s);
-        } catch(UnsupportedEncodingException ignored) {}
+
+        /* process data in buffer */
+        processBuffer(client, buffer);
+
+    }
+
+    void processBuffer(SocketChannel client, ByteBuffer buffer) {
+        Boolean discard = mClientDiscard.get(client.socket());
+
+        /* process buffer */
+        if (discard) {
+            byte[] line = getLine(buffer);
+            if (line != null) {
+                mClientDiscard.put(client.socket(), Boolean.FALSE);
+            } else {
+                buffer.clear();
+                return;
+            }
+        }
+
+        byte[] line = getLine(buffer);
+        while (line != null) {
+            // process line
+            try {
+                Log.i(TAG, "::"+new String(line, "UTF-8"));
+            } catch (UnsupportedEncodingException ignored) {}
+            line = getLine(buffer);
+        }
+        if (!buffer.hasRemaining()) {
+            // process all buffer as if line
+            buffer.flip();
+            line = new byte[buffer.limit()];
+            buffer.get(line);
+            try {
+                Log.i(TAG, "::"+new String(line, "UTF-8"));
+            } catch (UnsupportedEncodingException ignored) {}
+            buffer.clear();
+            mClientDiscard.put(client.socket(), Boolean.TRUE);
+        }
+    }
+
+    static byte[] getLine(ByteBuffer bfr) {
+        // note: duplicate copies only bytebuffer metadata (such as position,
+        // limit, capicity) and not the actual content
+        ByteBuffer buffer = bfr.duplicate();
+        int last = buffer.position();
+        buffer.flip();
+        int nPos = -1; // position of \n in the buffer
+        for (int i=0; i < last; i++) {
+            int currChar = buffer.get();
+            // 0x0a = \n; 0x0D = \r
+            if (currChar == 0x0A) {
+                nPos = i;
+                break;
+            }
+        }
+        if (nPos == -1) {
+            return null;
+        } else {
+            byte[] ret = new byte[nPos+1];
+            // we want to use the ORIGINAL buffer here
+            bfr.flip();
+            bfr.get(ret);
+            bfr.compact();
+            return ret;
+        }
     }
 }
+
+
