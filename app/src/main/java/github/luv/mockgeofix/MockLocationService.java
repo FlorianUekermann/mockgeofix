@@ -204,7 +204,7 @@ class MockLocationThread extends Thread {
                 mService.threadHasStartedSuccessfully();
                 try {
                     while (!mStop && !mRebind) {
-                        Log.d(TAG, "running");
+                        //Log.d(TAG, "running");
                         selector.select();
                         for (SelectionKey key : selector.selectedKeys()) {
                             if (key.isAcceptable() && key.channel() instanceof ServerSocketChannel) {
