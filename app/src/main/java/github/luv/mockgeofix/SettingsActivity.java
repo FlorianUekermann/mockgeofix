@@ -1,6 +1,11 @@
 package github.luv.mockgeofix;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -23,14 +28,41 @@ public class SettingsActivity extends PreferenceActivity
         implements Preference.OnPreferenceChangeListener {
     static final String TAG = "SettingsActivity";
 
+    private MockLocationService mService = null;
+    private boolean mShowNeedsReset = false;
+    private ServiceConnection mConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            mService = ((MockLocationService.Binder)binder).getService();
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        if (mService != null && mConn != null) {
+            unbindService(mConn);
+        }
+        super.onDestroy();
+    }
+
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+        bindService(new Intent(getApplicationContext(),MockLocationService.class),
+                mConn,
+                Context.BIND_AUTO_CREATE
+        );
         setupSimplePreferencesScreen();
+        mShowNeedsReset = false;
         bindPreference(findPreference("listen_port"));
         bindPreference(findPreference("listen_ip"));
         bindPreference(findPreference("password"));
         bindPreference(findPreference("require_password"));
+        mShowNeedsReset = true;
     }
 
 
@@ -145,6 +177,15 @@ public class SettingsActivity extends PreferenceActivity
                 pref.setSummary(stringValue);
             }
         }
+
+        /* Warn the user that the change won't take effect until the service is restarted */
+        if (pref.getKey().equals("listen_port") || pref.getKey().equals("listen_ip")) {
+            if (mShowNeedsReset && (mService != null && mService.isRunning()) ) {
+                Toast.makeText(getApplicationContext(), getString(R.string.note_needsreset),
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+
         return true;
     }
 }

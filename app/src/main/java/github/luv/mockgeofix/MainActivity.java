@@ -105,11 +105,11 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         if (mService != null && mConn != null) {
             unbindService(mConn);
         }
         unregisterReceiver(receiver);
+        super.onDestroy();
     }
 
     protected synchronized  void updateListensOn() {

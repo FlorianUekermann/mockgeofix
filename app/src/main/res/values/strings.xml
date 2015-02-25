@@ -43,5 +43,8 @@
     <string name="err_address_already_in_use">Binding error. Address/port already in use.</string>
     <string name="err_socket_permission_denied">Binding error. Permission denied. (You should use port number >=1024.)</string>
 
+    <!-- notes -->
+    <string name="note_needsreset">Note: This change won\'t take effect until you restart the service.</string>
+
 
 </resources>

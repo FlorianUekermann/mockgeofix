@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -28,7 +29,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Vector;
 
-public class MockLocationService extends Service implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MockLocationService extends Service {
     String TAG = "MockLocationService";
 
     protected MockLocationThread mThread = null;
@@ -52,8 +53,6 @@ public class MockLocationService extends Service implements SharedPreferences.On
         super.onCreate();
         pref = PreferenceManager.getDefaultSharedPreferences(
                 getApplicationContext());
-
-        pref.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -64,16 +63,6 @@ public class MockLocationService extends Service implements SharedPreferences.On
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("listen_port") || key.equals("listen_ip")) {
-            if (mThread != null) {
-                mThread.rebind();
-                mThread.interrupt();
-            }
-        }
     }
 
     /* interface to be used by clients */
@@ -97,7 +86,7 @@ public class MockLocationService extends Service implements SharedPreferences.On
     }
     /* end of interface */
 
-    /* methods used my MockLocationThread
+    /* methods used by MockLocationThread
        to communicate its' state */
     protected void threadHasStopped() {
         mThread = null;
@@ -116,7 +105,7 @@ public class MockLocationService extends Service implements SharedPreferences.On
         Vector<SocketAddress> ret = new Vector<>();
 
         /* retrieve port settings from preferences */
-        String portStr = pref.getString("listen_port", "");
+        String portStr = pref.getString("listen_port", "5554");
         int port;
         try {
             port = Integer.parseInt(portStr);
@@ -171,16 +160,17 @@ class MockLocationThread extends Thread {
     public MockLocationThread(Context context, MockLocationService service) {
         mContext = context;
         mService = service;
+        PowerManager mgr = (PowerManager)context
+                .getSystemService(Context.POWER_SERVICE);
+        mWakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "MockGeoFixWakeLock");
     }
     private boolean mStop = false;
-    private boolean mRebind = false;
 
     private HashMap<Socket, Boolean> mClientDiscard = new HashMap<>();
     private HashMap<Socket, ByteBuffer> mClientBuffers = new HashMap<>();
 
-    public void rebind() {
-        mRebind = true;
-    }
+    protected PowerManager.WakeLock mWakeLock = null;
 
     public void kill() {
         mStop = true;
@@ -190,44 +180,41 @@ class MockLocationThread extends Thread {
     @Override
     public void run() {
         super.run();
+        Selector selector = null;
         try {
+            selector = Selector.open();
+            mBindAddresses = mService.getBindAddresses();
+            for (SocketAddress address : mBindAddresses) {
+                ServerSocketChannel ssc = ServerSocketChannel.open();
+                ssc.configureBlocking(false);
+                ssc.socket().setReuseAddress(true);
+                ssc.socket().bind(address);
+                ssc.register(selector, SelectionKey.OP_ACCEPT);
+            }
+            try {
+                mWakeLock.acquire();
+            } catch (SecurityException ex) {
+                Log.e(TAG, "WakeLock not acquired - permission denied for WakeLock.");
+            }
+            mService.threadHasStartedSuccessfully();
+
             while (!mStop) {
-                Selector selector = Selector.open();
-                mBindAddresses = mService.getBindAddresses();
-                for (SocketAddress address : mBindAddresses) {
-                    ServerSocketChannel ssc = ServerSocketChannel.open();
-                    ssc.configureBlocking(false);
-                    ssc.socket().setReuseAddress(true);
-                    ssc.socket().bind(address);
-                    ssc.register(selector, SelectionKey.OP_ACCEPT);
-                }
-                mService.threadHasStartedSuccessfully();
-                try {
-                    while (!mStop && !mRebind) {
-                        //Log.d(TAG, "running");
-                        selector.select();
-                        for (SelectionKey key : selector.selectedKeys()) {
-                            if (key.isAcceptable() && key.channel() instanceof ServerSocketChannel) {
-                                // accept connection
-                                SocketChannel client = ((ServerSocketChannel)key.channel()).accept();
-                                if (client != null) {
-                                    client.configureBlocking(false);
-                                    client.socket().setTcpNoDelay(true);
-                                    client.register(selector, SelectionKey.OP_READ);
-                                }
-                            }
-                            if (key.isReadable() && key.channel() instanceof SocketChannel) {
-                                onIncomingData((SocketChannel) key.channel());
-                            }
+                selector.select();
+                for (SelectionKey key : selector.selectedKeys()) {
+                    if (key.isAcceptable() && key.channel() instanceof ServerSocketChannel) {
+                        // accept connection
+                        SocketChannel client = ((ServerSocketChannel) key.channel()).accept();
+                        if (client != null) {
+                            client.configureBlocking(false);
+                            client.socket().setTcpNoDelay(true);
+                            client.register(selector, SelectionKey.OP_READ);
                         }
-                        selector.selectedKeys().clear();
                     }
-                } finally {
-                    for (SelectionKey key : selector.keys()) {
-                        try { key.channel().close(); } catch (IOException ignored) {}
+                    if (key.isReadable() && key.channel() instanceof SocketChannel) {
+                        onIncomingData((SocketChannel) key.channel());
                     }
-                    selector.close();
                 }
+                selector.selectedKeys().clear();
             }
         } catch (SocketException e) {
             Log.e(TAG, e.toString() );
@@ -240,6 +227,15 @@ class MockLocationThread extends Thread {
         } catch (IOException e) {
             Log.e(TAG, e.toString() );
         } finally {
+            if (mWakeLock.isHeld()) {
+                mWakeLock.release();
+            }
+            if (selector != null) {
+                for (SelectionKey key : selector.keys()) {
+                    try { key.channel().close(); } catch (IOException ignored) {}
+                }
+                try { selector.close(); } catch (IOException ignored) {}
+            }
             mService.threadHasStopped();
         }
     }
@@ -292,7 +288,8 @@ class MockLocationThread extends Thread {
         while (line != null) {
             // process line
             try {
-                Log.i(TAG, "::"+new String(line, "UTF-8"));
+                String command = new String(line, "UTF-8").replace("\r\n","").replace("\n","");
+                CommandDispatcher.dispatch(client, command);
             } catch (UnsupportedEncodingException ignored) {}
             line = getLine(buffer);
         }
@@ -302,7 +299,8 @@ class MockLocationThread extends Thread {
             line = new byte[buffer.limit()];
             buffer.get(line);
             try {
-                Log.i(TAG, "::"+new String(line, "UTF-8"));
+                String command = new String(line, "UTF-8").replace("\r\n","").replace("\n","");
+                CommandDispatcher.dispatch(client, command);
             } catch (UnsupportedEncodingException ignored) {}
             buffer.clear();
             mClientDiscard.put(client.socket(), Boolean.TRUE);
