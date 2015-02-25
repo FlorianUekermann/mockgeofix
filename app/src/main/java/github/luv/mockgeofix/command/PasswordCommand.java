@@ -31,8 +31,10 @@ public class PasswordCommand implements Command {
         String storedPassword = pref.getString("password","");
         if (password.equals(storedPassword)) {
             mIsLoggedIn.put(client, Boolean.TRUE);
+            ResponseWriter.ok(client);
         } else {
             mIsLoggedIn.put(client, Boolean.FALSE);
+            ResponseWriter.writeLine(client, "KO: Incorrect password.");
         }
     }
 

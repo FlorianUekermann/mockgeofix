@@ -36,6 +36,10 @@ public class ResponseWriter {
         return write(client, response+"\r\n");
     }
 
+    public static boolean ok(SocketChannel client) {
+        return write(client, "OK\r\n");
+    }
+
     public static boolean unknownCommand(SocketChannel client) {
         return write(client, "KO: unknown command, try 'help'\r\n");
     }
