@@ -29,6 +29,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Vector;
 
+import github.luv.mockgeofix.util.ResponseWriter;
+
 public class MockLocationService extends Service {
     String TAG = "MockLocationService";
 
@@ -208,6 +210,8 @@ class MockLocationThread extends Thread {
                             client.configureBlocking(false);
                             client.socket().setTcpNoDelay(true);
                             client.register(selector, SelectionKey.OP_READ);
+                            ResponseWriter.writeLine(client, "MockGeoFix: type 'help' for a list of commands");
+                            ResponseWriter.ok(client);
                         }
                     }
                     if (key.isReadable() && key.channel() instanceof SocketChannel) {

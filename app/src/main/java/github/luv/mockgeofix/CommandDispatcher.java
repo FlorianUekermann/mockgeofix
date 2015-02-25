@@ -3,8 +3,10 @@ package github.luv.mockgeofix;
 import android.content.Context;
 import android.util.Log;
 
+import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
+import github.luv.mockgeofix.command.HelpCommand;
 import github.luv.mockgeofix.command.PasswordCommand;
 import github.luv.mockgeofix.util.ResponseWriter;
 
@@ -17,6 +19,7 @@ public class CommandDispatcher {
 
     protected Context mContext;
     protected PasswordCommand passwordCommand;
+    protected HelpCommand helpCommand;
 
     static public void init(Context context) {
         getInstance()._init(context);
@@ -33,6 +36,7 @@ public class CommandDispatcher {
         }
         mContext = context;
         passwordCommand = new PasswordCommand(context);
+        helpCommand = new HelpCommand();
     }
 
     protected void _dispatch(SocketChannel client, String command) {
@@ -46,7 +50,9 @@ public class CommandDispatcher {
                 Log.i(TAG, "GEO FIX::" + command);
             }
         } else if (cmd.equals("help")) {
-            Log.i(TAG, "GEO HELP::" + command);
+            helpCommand.execute(client, command);
+        } else if (cmd.equals("quit") || cmd.equals("exit")) {
+            try { client.close(); } catch(IOException ignored) {}
         } else {
             ResponseWriter.unknownCommand(client);
         }

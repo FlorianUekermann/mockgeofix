@@ -27,14 +27,23 @@ public class PasswordCommand implements Command {
             ResponseWriter.writeLine(client, "KO: Internal Error in 'PasswordCommand'.");
             return;
         }
-        String password = command.split(" ", 2)[1];
+        String password;
+        try {
+            password = command.split(" ", 2)[1];
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            password = "";
+        }
         String storedPassword = pref.getString("password","");
-        if (password.equals(storedPassword)) {
-            mIsLoggedIn.put(client, Boolean.TRUE);
-            ResponseWriter.ok(client);
+        if ( ! pref.getBoolean("require_password",false)) {
+            ResponseWriter.writeLine(client, "KO: Password is not required.");
         } else {
-            mIsLoggedIn.put(client, Boolean.FALSE);
-            ResponseWriter.writeLine(client, "KO: Incorrect password.");
+            if (password.equals(storedPassword)) {
+                mIsLoggedIn.put(client, Boolean.TRUE);
+                ResponseWriter.ok(client);
+            } else {
+                mIsLoggedIn.put(client, Boolean.FALSE);
+                ResponseWriter.writeLine(client, "KO: Incorrect password.");
+            }
         }
     }
 
