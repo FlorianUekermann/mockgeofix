@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.preference.PreferenceManager;
 
 public class MockGeoFixApp extends Application {
+    public boolean enableMockLocationDialogShown = false;
     @Override
     public void onCreate() {
         PreferenceManager.setDefaultValues(this, R.xml.pref, false);

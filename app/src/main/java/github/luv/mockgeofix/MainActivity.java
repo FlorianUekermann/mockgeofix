@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,6 +24,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Vector;
+
+import github.luv.mockgeofix.dialog.EnableMockLocationDialogFragment;
 
 public class MainActivity extends ActionBarActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     static String TAG = "MainActivity";
@@ -101,6 +104,22 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
         registerReceiver(receiver, new IntentFilter(MockLocationService.STARTED));
         registerReceiver(receiver, new IntentFilter(MockLocationService.STOPPED));
         registerReceiver(receiver, new IntentFilter(MockLocationService.ERROR));
+
+        // show a dialog when "allow mock location" is not enabled
+        if (Settings.Secure.getString(getApplicationContext().getContentResolver(),
+                Settings.Secure.ALLOW_MOCK_LOCATION).equals("0")) {
+            if ( ! ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown ) {
+                ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown = true;
+                (new EnableMockLocationDialogFragment()).show(getSupportFragmentManager(),
+                        "enable_mock_locatiom_dialog");
+            }
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown = false;
+        super.onBackPressed();
     }
 
     @Override

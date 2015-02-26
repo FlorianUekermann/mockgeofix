@@ -11,6 +11,11 @@
     \ngeo fix -121.45356 46.51119 4392
     </string>
 
+    <string name="enable_mocklocation">\"Allow mock location\" must be enabled for MockGeoFix
+     to work correctly. Open \"Developer options\"?</string>
+    <string name="development_settings_notfound">Failed to open \"Developer options\". You are probably
+     running too old Android. You have to open \"Developer options\" manually.</string>
+
     <!-- preferences -->
     <string name="pref_header_notifications">Notifications</string>
     <string name="pref_header_security">Security</string>
