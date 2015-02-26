@@ -11,7 +11,7 @@ import github.luv.mockgeofix.command.PasswordCommand;
 import github.luv.mockgeofix.util.ResponseWriter;
 
 public class CommandDispatcher {
-    String TAG = "CommandDispatcher";
+    static String TAG = "CommandDispatcher";
 
     static private CommandDispatcher instance = new CommandDispatcher();
     static public CommandDispatcher getInstance() { return instance; }

@@ -29,7 +29,7 @@ public class SettingsActivity extends PreferenceActivity
     static final String TAG = "SettingsActivity";
 
     private MockLocationService mService = null;
-    private boolean mShowNeedsReset = false;
+    private boolean mInitialBinding = true;
     private ServiceConnection mConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
@@ -57,12 +57,13 @@ public class SettingsActivity extends PreferenceActivity
                 Context.BIND_AUTO_CREATE
         );
         setupSimplePreferencesScreen();
-        mShowNeedsReset = false;
+        mInitialBinding = true;
         bindPreference(findPreference("listen_port"));
         bindPreference(findPreference("listen_ip"));
         bindPreference(findPreference("password"));
         bindPreference(findPreference("require_password"));
-        mShowNeedsReset = true;
+        bindPreference(findPreference("notifications_on"));
+        mInitialBinding = false;
     }
 
 
@@ -180,9 +181,19 @@ public class SettingsActivity extends PreferenceActivity
 
         /* Warn the user that the change won't take effect until the service is restarted */
         if (pref.getKey().equals("listen_port") || pref.getKey().equals("listen_ip")) {
-            if (mShowNeedsReset && (mService != null && mService.isRunning()) ) {
+            if ( ! mInitialBinding && (mService != null && mService.isRunning()) ) {
                 Toast.makeText(getApplicationContext(), getString(R.string.note_needsreset),
                         Toast.LENGTH_LONG).show();
+            }
+        }
+
+        /* Show/close our notification on "notifications_on" change */
+        if ( ! mInitialBinding && pref.getKey().equals("notifications_on")) {
+            Boolean boolValue = (Boolean)value;
+            if (mService != null && mService.isRunning() && boolValue) {
+                MockGeoFixNotification.show();
+            } else if (! boolValue) {
+                MockGeoFixNotification.close();
             }
         }
 

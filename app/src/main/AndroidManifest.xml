@@ -19,10 +19,10 @@
         </activity>
         <activity
             android:name="github.luv.mockgeofix.MainActivity"
+            android:launchMode="singleTop"
             android:label="@string/main_title" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

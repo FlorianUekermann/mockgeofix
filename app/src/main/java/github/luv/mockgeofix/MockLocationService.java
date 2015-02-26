@@ -78,6 +78,9 @@ public class MockLocationService extends Service {
         if (mThread == null) {
             mThread = new MockLocationThread(getApplicationContext(), this );
             mThread.start();
+            if (pref != null && pref.getBoolean("notifications_on",true)) {
+                MockGeoFixNotification.show();
+            }
         }
     }
 
@@ -85,6 +88,7 @@ public class MockLocationService extends Service {
         if (mThread == null) { return; }
         mThread.kill();
         mThread.interrupt();
+        MockGeoFixNotification.close();
     }
     /* end of interface */
 

@@ -10,6 +10,7 @@ public class MockGeoFixApp extends Application {
     public void onCreate() {
         PreferenceManager.setDefaultValues(this, R.xml.pref, false);
         CommandDispatcher.init(getApplicationContext());
+        MockGeoFixNotification.init(getApplicationContext());
         Intent i = new Intent(getApplicationContext(), MockLocationService.class);
         startService(i);
     }
