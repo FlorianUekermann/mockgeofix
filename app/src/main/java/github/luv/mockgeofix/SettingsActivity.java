@@ -62,7 +62,6 @@ public class SettingsActivity extends PreferenceActivity
         bindPreference(findPreference("listen_ip"));
         bindPreference(findPreference("password"));
         bindPreference(findPreference("require_password"));
-        bindPreference(findPreference("notifications_on"));
         mInitialBinding = false;
     }
 
@@ -184,16 +183,6 @@ public class SettingsActivity extends PreferenceActivity
             if ( ! mInitialBinding && (mService != null && mService.isRunning()) ) {
                 Toast.makeText(getApplicationContext(), getString(R.string.note_needsreset),
                         Toast.LENGTH_LONG).show();
-            }
-        }
-
-        /* Show/close our notification on "notifications_on" change */
-        if ( ! mInitialBinding && pref.getKey().equals("notifications_on")) {
-            Boolean boolValue = (Boolean)value;
-            if (mService != null && mService.isRunning() && boolValue) {
-                MockGeoFixNotification.show();
-            } else if (! boolValue) {
-                MockGeoFixNotification.close();
             }
         }
 

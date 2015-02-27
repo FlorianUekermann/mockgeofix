@@ -78,9 +78,6 @@ public class MockLocationService extends Service {
         if (mThread == null) {
             mThread = new MockLocationThread(getApplicationContext(), this );
             mThread.start();
-            if (pref != null && pref.getBoolean("notifications_on",true)) {
-                MockGeoFixNotification.show();
-            }
         }
     }
 
@@ -88,7 +85,6 @@ public class MockLocationService extends Service {
         if (mThread == null) { return; }
         mThread.kill();
         mThread.interrupt();
-        MockGeoFixNotification.close();
     }
     /* end of interface */
 
@@ -202,6 +198,7 @@ class MockLocationThread extends Thread {
             } catch (SecurityException ex) {
                 Log.e(TAG, "WakeLock not acquired - permission denied for WakeLock.");
             }
+            MockLocationProvider.register();
             mService.threadHasStartedSuccessfully();
 
             while (!mStop) {
@@ -238,6 +235,7 @@ class MockLocationThread extends Thread {
             if (mWakeLock.isHeld()) {
                 mWakeLock.release();
             }
+            MockLocationProvider.unregister();
             if (selector != null) {
                 for (SelectionKey key : selector.keys()) {
                     try { key.channel().close(); } catch (IOException ignored) {}

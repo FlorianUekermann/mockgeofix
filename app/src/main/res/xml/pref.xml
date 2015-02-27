@@ -12,14 +12,6 @@
         android:title="@string/listen_ip"
         android:defaultValue="ALL"
     />
-    <PreferenceCategory
-        android:title="@string/pref_header_notifications"
-        android:key="pref_cat_notifications">
-        <CheckBoxPreference
-            android:key="notifications_on"
-            android:title="@string/notifications_on"
-            android:defaultValue="true" />
-    </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/pref_header_security"

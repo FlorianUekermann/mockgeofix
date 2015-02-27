@@ -8,11 +8,13 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.location.LocationManager;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +28,7 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 import github.luv.mockgeofix.dialog.EnableMockLocationDialogFragment;
+import github.luv.mockgeofix.dialog.OpenLocationSourceSettingsDialogFragment;
 
 public class MainActivity extends ActionBarActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     static String TAG = "MainActivity";
@@ -111,14 +114,37 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
             if ( ! ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown ) {
                 ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown = true;
                 (new EnableMockLocationDialogFragment()).show(getSupportFragmentManager(),
-                        "enable_mock_locatiom_dialog");
+                        "enable_mock_location_dialog");
             }
         }
+
+        // show a dialog when other location providers apart from the GPS one are enabled
+        LocationManager locationManager =
+                (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        for (String provider : locationManager.getAllProviders()) {
+            if (locationManager.isProviderEnabled(provider) &&
+                    !provider.equals(LocationManager.PASSIVE_PROVIDER) &&
+                    !provider.equals(LocationManager.GPS_PROVIDER)) {
+                Toast.makeText(getApplicationContext(),
+                    String.format(getString(R.string.provider_enabled), provider), Toast.LENGTH_LONG).show();
+            }
+        }
+
+        if (! ((MockGeoFixApp)getApplication()).openLocationSourceSettingsDialogShown ) {
+            if ( ! locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                ((MockGeoFixApp) getApplication()).openLocationSourceSettingsDialogShown = true;
+                (new OpenLocationSourceSettingsDialogFragment()).show(getSupportFragmentManager(),
+                        "open_location_source_settings_dialog");
+            }
+        }
+
     }
 
     @Override
     public void onBackPressed() {
         ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown = false;
+        ((MockGeoFixApp)getApplication()).openLocationSourceSettingsDialogShown= false;
         super.onBackPressed();
     }
 
@@ -213,8 +239,8 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
     protected synchronized void updateDescription() {
         if (pref == null || mDescription == null) {return;}
         String port = pref.getString("listen_port","5554");
-        mDescription.setText(String.format(getString(R.string.long_description),
-                port));
+        mDescription.setText(Html.fromHtml(String.format(getString(R.string.long_description),
+                port)));
     }
 
     public void showPreferences(View view) {

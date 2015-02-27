@@ -5,10 +5,12 @@
     <string name="settings_title">Settings</string>
 
     <string name="long_description">MockGeoFix makes your phone support \"geo fix\"
-    and \"geo nmea\" commands (compatible with the android emulator commands). <b>\"Mock Locations\"
-    must be enabled in developer options to make this work.</b>
-    \n\nTelnet to port %s using one of the IPs above and enter a geo command. For example:
-    \ngeo fix -121.45356 46.51119 4392
+    and \"geo nmea\" commands (compatible with the android emulator commands).
+    &lt;br/>&lt;br/>&lt;b>\"Mock Locations\" must be enabled in developer options.&lt;br/>
+    Also make sure to disable all location sources except "GPS satellites" in \"Location Sources\"
+     settings. (MockGeoFix mocks a GPS provider.)&lt;/b>
+    &lt;br/>&lt;br/>Telnet to port %s using one of the IPs above and enter a geo command. For example:
+    &lt;br/>geo fix -121.45356 46.51119 4392
     </string>
 
     <string name="notification_text">Running. Touch to open MockGeoFix.</string>
@@ -16,6 +18,13 @@
      to work correctly. Open \"Developer options\"?</string>
     <string name="development_settings_notfound">Failed to open \"Developer options\". You are probably
      running too old Android. You have to open \"Developer options\" manually.</string>
+
+    <string name="open_location_source_settings">GPS location provider should be enabled and all other
+    providers should be disabled for MockGeoFix to work properly. Open \"Location Sources\" settings?</string>
+    <string name="location_source_notfound">Failed to open \"Location Sources\".
+    You have to open \"Location Sources\" settings manually.</string>
+    <string name="provider_enabled">Warning: Location provider \"%s\" is enabled.
+    This provider might collide with MockGeoFix location updates.</string>
 
     <!-- preferences -->
     <string name="pref_header_notifications">Notifications</string>
