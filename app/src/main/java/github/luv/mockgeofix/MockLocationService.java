@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -198,6 +199,10 @@ class MockLocationThread extends Thread {
             } catch (SecurityException ex) {
                 Log.e(TAG, "WakeLock not acquired - permission denied for WakeLock.");
             }
+            if ( mContext.checkCallingOrSelfPermission("android.permission.ACCESS_MOCK_LOCATION")
+                  != PackageManager.PERMISSION_GRANTED) {
+                throw new SecurityException("Permission denied for android.permission.ACCESS_MOCK_LOCATION");
+            }
             MockLocationProvider.register();
             mService.threadHasStartedSuccessfully();
 
@@ -231,6 +236,9 @@ class MockLocationThread extends Thread {
             }
         } catch (IOException e) {
             Log.e(TAG, e.toString() );
+        } catch (SecurityException e) {
+            Log.e(TAG, e.toString() );
+            mService.errorHasOccurred(mContext.getString(R.string.err_access_mock_location));
         } finally {
             if (mWakeLock.isHeld()) {
                 mWakeLock.release();

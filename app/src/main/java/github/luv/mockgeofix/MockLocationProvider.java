@@ -4,6 +4,7 @@ import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -61,9 +62,13 @@ public class MockLocationProvider {
 
     protected void _register() {
         // if the test provider already exists, android handles this fine
-        mLocationManager.addTestProvider(locationProviderName, false, false, false,
-                false, true, true, true, 0, accuracy);
-        mLocationManager.setTestProviderEnabled(locationProviderName, true);
+        try {
+            mLocationManager.addTestProvider(locationProviderName, false, false, false,
+                    false, true, true, true, 0, accuracy);
+            mLocationManager.setTestProviderEnabled(locationProviderName, true);
+        } catch (IllegalArgumentException ex) {
+            Log.e(TAG, "IllegalArgumentException thrown in _register");
+        }
     }
 
     protected void _unregister() {

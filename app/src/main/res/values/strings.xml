@@ -57,6 +57,8 @@
     <string name="invalid_port">That\'s an invalid port number. Port must be a number between 0 and 65535.</string>
     <string name="err_address_already_in_use">Binding error. Address/port already in use.</string>
     <string name="err_socket_permission_denied">Binding error. Permission denied. (You should use port number >=1024.)</string>
+    <string name="err_access_mock_location">Mock Location Provider could not be created.
+    Is \"Allow mock locations\"  enabled in \"Developer options\"?</string>
 
     <!-- notes -->
     <string name="note_needsreset">Note: This change won\'t take effect until you restart the service.</string>
