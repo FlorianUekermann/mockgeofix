@@ -170,7 +170,11 @@ public class GeoNmeaCommand implements Command {
         for (int i=0; i<checkString.length(); i++) {
             sum ^= (int)( checkString.charAt(i) );
         }
-        String hexsum = Integer.toHexString(sum);
+        String hexsum = String.format("%02X", sum);
+        if (checksum.length() < 2) {
+            checksum = "0" + checksum;
+        }
+
         return hexsum.toLowerCase().equals(checksum.toLowerCase());
     }
 
