@@ -50,7 +50,12 @@ public class CommandDispatcher {
             if ( passwordCommand.passwordRequired() && (! passwordCommand.loggedIn(client)) ) {
                 ResponseWriter.notLoggedIn(client);
             } else {
-                geoCommand.execute(client, command);
+                try {
+                    geoCommand.execute(client, command);
+                } catch (Throwable ex) {
+                    // anything goes wrong, just ignore this command
+                    Log.e(TAG, "error during executing geo command: "+ex.toString());
+                }
             }
         } else if (cmd.equals("help")) {
             helpCommand.execute(client, command);

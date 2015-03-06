@@ -46,10 +46,13 @@ public class MockLocationProvider {
         getInstance()._simulate(longitude, latitude, altitude, satellites);
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     static public void simulate(Location location) {
         getInstance()._verifyInitiated();
         getInstance()._simulate(location);
+    }
+
+    static public Location getLocation() {
+        return new Location(locationProviderName);
     }
 
     protected void _init(Context context) {
@@ -93,6 +96,12 @@ public class MockLocationProvider {
     }
 
     protected void _simulate(Location location) {
+        if (!location.hasAccuracy()) {
+            location.setAccuracy(accuracy);
+        }
+        if (!location.hasAltitude()) {
+            location.setAltitude(0);
+        }
         try {
             Method locationJellyBeanFixMethod = Location.class.getMethod("makeComplete");
             if (locationJellyBeanFixMethod != null) {
