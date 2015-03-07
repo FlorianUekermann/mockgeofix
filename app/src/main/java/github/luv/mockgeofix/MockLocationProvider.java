@@ -13,7 +13,7 @@ public class MockLocationProvider {
     static String TAG = "MockLocationProvider";
     //static String locationProviderName = "MockGeoFix";
     static String locationProviderName = LocationManager.GPS_PROVIDER;
-    static int accuracy = 100;
+    static int accuracy = 1;
 
     static private MockLocationProvider instance = new MockLocationProvider();
     static public MockLocationProvider getInstance() { return instance; }

@@ -3,6 +3,7 @@ package github.luv.mockgeofix.command;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
+import android.os.Bundle;
 import android.util.Log;
 
 import java.nio.channels.SocketChannel;
@@ -148,14 +149,115 @@ public class GeoNmeaCommand implements Command {
         location.setBearing(bearing);
 
         MockLocationProvider.simulate(location);
-        Log.d(TAG, "nmea sentence processed (lat, long: "+String.valueOf(latitude)+
+        Log.d(TAG, "nmea RMC sentence processed (lat, long: "+String.valueOf(latitude)+
                 " , "+String.valueOf(longitude)+")");
 
         ResponseWriter.ok(client);
     }
 
     public void processGPGGA(SocketChannel client, String[] nmeaFields, String command) {
-        ResponseWriter.writeLine(client, "KO: Not Implemented Yet");
+        /* example: $GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47
+        fields:
+        123519       Fix taken at 12:35:19 UTC
+        4807.038,N   Latitude 48 deg 07.038' N
+        01131.000,E  Longitude 11 deg 31.000' E
+        1            Fix quality: 0 = invalid
+                                  everything else = valid
+        08           Number of satellites being tracked
+        0.9          Horizontal dilution of position
+        545.4,M      Altitude, Meters, above mean sea level
+        46.9,M       Height of geoid (mean sea level) above WGS84
+                    ellipsoid
+        (empty field) time in seconds since last DGPS update
+        (empty field) DGPS station ID number
+        *47          the checksum data, always begins with *
+        */
+
+        String strTime, strLatitude, strLatitudeQual, strLongitude, strLongitudeQual,
+                strQuality, strSatellites, strAltitude, strAltitudeUnits;
+        try {
+            strTime = nmeaFields[1];
+            strLatitude = nmeaFields[2];
+            strLatitudeQual = nmeaFields[3];
+            strLongitude = nmeaFields[4];
+            strLongitudeQual = nmeaFields[5];
+            strQuality = nmeaFields[6];
+            strSatellites = nmeaFields[7];
+            strAltitude = nmeaFields[9];
+            strAltitudeUnits = nmeaFields[10];
+        } catch (IndexOutOfBoundsException ex) {
+            // ok because that's what the emulator does as well
+            Log.i(TAG, "Ignoring Nmea sentence: too few fields: "+command);
+            ResponseWriter.ok(client);
+            return;
+        }
+
+        if (!checkChecksum(command)) {
+            ResponseWriter.ok(client);
+            Log.i(TAG, "Ignoring Nmea sentence: invalid checksum: "+command);
+            return;
+        }
+
+        if (strQuality.equals("0")) {
+            ResponseWriter.ok(client);
+            Log.i(TAG, "Ignoring Nmea sentence: FixQuality is '0' (invalid): "+command);
+            return;
+        }
+
+        long timestamp;
+        double latitude;
+        double longitude;
+        int satellites;
+        double altitude;
+        try {
+            timestamp = convertTimeAndDate(strTime, null);
+        } catch(ParseException ex) {
+            ResponseWriter.ok(client);
+            Log.i(TAG, "Ignoring Nmea sentence: Can't parse date or time: "+command);
+            return;
+        }
+
+        try {
+            latitude = convertLatitude(strLatitude, strLatitudeQual);
+            longitude = convertLongitude(strLongitude, strLongitudeQual);
+        } catch(NumberFormatException ex) {
+            ResponseWriter.ok(client);
+            Log.i(TAG, "Ignoring Nmea sentence: Can't parse latitude or longitude: "+command);
+            return;
+        }
+
+        try {
+            satellites = Integer.valueOf(strSatellites);
+        } catch(NumberFormatException ex) {
+            ResponseWriter.ok(client);
+            Log.i(TAG, "Ignoring Nmea sentence: Can't parse satellites: "+command);
+            return;
+        }
+
+        try {
+            altitude = convertAltitude(strAltitude, strAltitudeUnits);
+        } catch(NumberFormatException ex) {
+            ResponseWriter.ok(client);
+            Log.i(TAG, "Ignoring Nmea sentence: Can't parse altitude: "+command);
+            return;
+        }
+
+        Location location = MockLocationProvider.getLocation();
+        location.setLatitude(latitude);  // double
+        location.setLongitude(longitude);
+        location.setAltitude(altitude);
+        location.setTime(timestamp);
+        // satellites
+        Bundle bundle = new Bundle();
+        bundle.putInt("satellites", satellites);
+        location.setExtras(bundle);
+
+        MockLocationProvider.simulate(location);
+
+        Log.d(TAG, "nmea GGA sentence processed (lat, long: "+String.valueOf(latitude)+
+                " , "+String.valueOf(longitude)+")");
+
+        ResponseWriter.ok(client);
     }
 
     public boolean checkChecksum(String command) {
@@ -180,27 +282,63 @@ public class GeoNmeaCommand implements Command {
 
     public long convertTimeAndDate(String time, String date) throws ParseException {
         //  UTC time, in milliseconds since January 1, 1970.
-
-        // suppressed because we set the timezone using setTimeZone in next step
+        String timeNew = time.replaceFirst("[.].*","");
+        if (date == null) {
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMyy");
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date dateObj = new Date();
+            date = dateFormat.format(dateObj);
+        }
+        // SuppressLint because we set the timezone using setTimeZone in next step
         @SuppressLint("SimpleDateFormat") SimpleDateFormat sf = new SimpleDateFormat("HHmmss ddMMyy");
         sf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date d = sf.parse(time+" "+date);
+        Date d = sf.parse(timeNew + " " + date);
         return d.getTime();
     }
 
     public double convertLatitude(String strLatitude, String qual) throws NumberFormatException {
-        double lat = Double.valueOf(strLatitude) / 100;
-        if (qual.equals("S")) {
+        int dot = strLatitude.indexOf(".");
+        double lat;
+        if (dot >= 4) {
+            // just a sanity check - this should always be true for a valid NMEA coordinates
+            double degrees = Double.valueOf( strLatitude.substring(0,dot-2) );
+            double minutes = Double.valueOf( strLatitude.substring(dot-2) );
+            lat = degrees + minutes / 60;
+        } else {
+            Log.e(TAG, "convertLatitude - using stupid fallback conversion for: "+strLatitude);
+            lat = Double.valueOf(strLatitude) / 100;
+        }
+        if (qual.toLowerCase().equals("s")) {
             lat *= -1;
         }
         return lat;
     }
 
     public double convertLongitude(String strLongitude, String qual) throws NumberFormatException {
-        double longitude = Double.valueOf(strLongitude) / 100;
-        if (qual.equals("W")) {
+        int dot = strLongitude.indexOf(".");
+        double longitude;
+        if (dot >= 4) {
+            // just a sanity check - this should always be true for a valid NMEA coordinates
+            double degrees = Double.valueOf( strLongitude.substring(0,dot-2) );
+            double minutes = Double.valueOf( strLongitude.substring(dot-2) );
+            longitude = degrees + minutes / 60;
+        } else {
+            Log.e(TAG, "convertLongitude - using stupid fallback conversion for: "+strLongitude);
+            longitude = Double.valueOf(strLongitude) / 100;
+        }
+        if (qual.toLowerCase().equals("w")) {
             longitude *= -1;
         }
         return longitude;
+    }
+
+    public double convertAltitude(String strAltitude, String units) throws NumberFormatException {
+        if (units.toLowerCase().equals("f")) {
+            return Double.valueOf(strAltitude) / 3.2808;
+        } else if (units.toLowerCase().equals("m")) {
+            return Double.valueOf(strAltitude);
+        } else {
+            return Double.valueOf(strAltitude);
+        }
     }
 }
