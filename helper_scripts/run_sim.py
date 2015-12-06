@@ -197,8 +197,8 @@ if __name__ == '__main__':
                              required=True)
     args_parser.add_argument("-p", "--port", default=5554, help="default: 5554", type=int)
     args_parser.add_argument("-g", "--gpx-file", required=True)
-    args_parser.add_argument("-S", "--sleep", help="sleep between track points (default: 0.1)",
-                             required=False, default=0.1, type=float)
+    args_parser.add_argument("-S", "--sleep", help="sleep between track points (default: 0.5)",
+                             required=False, default=0.5, type=float)
     args_parser.add_argument("-s", "--speed", help="speed in km/h (takes precedence over -S)",
                              required=False, type=float)
     args_parser.add_argument("-I", "--listen-ip",
