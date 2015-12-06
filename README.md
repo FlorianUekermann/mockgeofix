@@ -12,18 +12,18 @@ install this APK on your phone (requires allowed "Unknown sources").
 
 helper scripts
 -------------------
-`helper_scripts/run_sim.py` loads an GPX file and replays it sending "geo fix" commands. 
-This script also support optional live visualization of the simulated route in a web browser.
+`helper_scripts/run_sim.py` loads a GPX file and replays it sending "geo fix" commands. 
+This script also supports optional live visualization of the simulated route in a web browser.
 
 ### Examples
 
 1. run MockGeoFix on your phone and click "start"
-2. run `helper_scripts/run_sim.py -i <your_phone_ip> -g your_gpx_file.gpx` on your computer
+2. run `./run_sim.py -i <your_phone_ip> -g your_gpx_file.gpx` on your computer
 
 with web visualization ...
 
 1. run MockGeoFix on your phone
-2. run `helper_scripts/run_sim.py -i <your_phone_ip> -g your_gpx_file.gpx -I 127.0.0.1 -P 8080 -S 20`
+2. run `./run_sim.py -i <your_phone_ip> -g your_gpx_file.gpx -I 127.0.0.1 -P 8080 -S 20`
   - NOTE: -S 20 will simulate 20km/h speed
 3. open http://127.0.0.1:8080 in your web browser
 
