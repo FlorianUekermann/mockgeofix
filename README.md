@@ -24,7 +24,7 @@ with web visualization ...
 
 1. run MockGeoFix on your phone
 2. run `./run_sim.py -i <your_phone_ip> -g your_gpx_file.gpx -I 127.0.0.1 -P 8080 -s 20`
-  - NOTE: -S 20 will simulate 20km/h speed
+  - NOTE: -s 20 will simulate 20km/h speed
 3. open http://127.0.0.1:8080 in your web browser
 
 `helper_scripts/run_sim.py --help` for more info
