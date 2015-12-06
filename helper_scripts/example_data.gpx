@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<gpx creator="GPS Visualizer http://www.gpsvisualizer.com/" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<wpt lat="-34.5956718" lon="-58.4169693">
+  <name>-34.5956718,-58.4169693</name>
+  <desc>Bulnes 1348-1400, C1176ABZ CABA, Argentina</desc>
+</wpt>
+<wpt lat="-34.6098124" lon="-58.4358192">
+  <name>-34.6098124,-58.4358192</name>
+  <desc>Campichuelo 629-663, C1405BOI CABA, Argentina</desc>
+</wpt>
+<trk>
+  <name>Bulnes 1348-1400 - Campichuelo 629-663</name>
+  <desc>3.0 km, 0:37</desc>
+  <trkseg>
+    <trkpt lat="-34.5957" lon="-58.4168"></trkpt>
+    <trkpt lat="-34.59664" lon="-58.41701"></trkpt>
+    <trkpt lat="-34.59782" lon="-58.41726"></trkpt>
+    <trkpt lat="-34.59782" lon="-58.41726"></trkpt>
+    <trkpt lat="-34.59781" lon="-58.4176"></trkpt>
+    <trkpt lat="-34.59781" lon="-58.41802"></trkpt>
+    <trkpt lat="-34.5978" lon="-58.41898"></trkpt>
+    <trkpt lat="-34.59778" lon="-58.42019"></trkpt>
+    <trkpt lat="-34.59777" lon="-58.42179"></trkpt>
+    <trkpt lat="-34.59779" lon="-58.42312"></trkpt>
+    <trkpt lat="-34.59779" lon="-58.42336"></trkpt>
+    <trkpt lat="-34.59779" lon="-58.42336"></trkpt>
+    <trkpt lat="-34.59784" lon="-58.42388"></trkpt>
+    <trkpt lat="-34.59783" lon="-58.42495"></trkpt>
+    <trkpt lat="-34.59788" lon="-58.4263"></trkpt>
+    <trkpt lat="-34.59789" lon="-58.42644"></trkpt>
+    <trkpt lat="-34.59791" lon="-58.42663"></trkpt>
+    <trkpt lat="-34.59795" lon="-58.42681"></trkpt>
+    <trkpt lat="-34.59798" lon="-58.42691"></trkpt>
+    <trkpt lat="-34.59834" lon="-58.42775"></trkpt>
+    <trkpt lat="-34.59837" lon="-58.42783"></trkpt>
+    <trkpt lat="-34.59843" lon="-58.42797"></trkpt>
+    <trkpt lat="-34.59869" lon="-58.42853"></trkpt>
+    <trkpt lat="-34.59896" lon="-58.4291"></trkpt>
+    <trkpt lat="-34.59902" lon="-58.42918"></trkpt>
+    <trkpt lat="-34.59934" lon="-58.42966"></trkpt>
+    <trkpt lat="-34.59934" lon="-58.42966"></trkpt>
+    <trkpt lat="-34.59979" lon="-58.42973"></trkpt>
+    <trkpt lat="-34.60086" lon="-58.42992"></trkpt>
+    <trkpt lat="-34.60099" lon="-58.42994"></trkpt>
+    <trkpt lat="-34.60208" lon="-58.43012"></trkpt>
+    <trkpt lat="-34.60226" lon="-58.43015"></trkpt>
+    <trkpt lat="-34.60247" lon="-58.43018"></trkpt>
+    <trkpt lat="-34.60403" lon="-58.43041"></trkpt>
+    <trkpt lat="-34.60417" lon="-58.43043"></trkpt>
+    <trkpt lat="-34.60492" lon="-58.43053"></trkpt>
+    <trkpt lat="-34.60593" lon="-58.43065"></trkpt>
+    <trkpt lat="-34.60593" lon="-58.43065"></trkpt>
+    <trkpt lat="-34.60649" lon="-58.4321"></trkpt>
+    <trkpt lat="-34.60651" lon="-58.43225"></trkpt>
+    <trkpt lat="-34.60651" lon="-58.43233"></trkpt>
+    <trkpt lat="-34.60649" lon="-58.43259"></trkpt>
+    <trkpt lat="-34.60651" lon="-58.43273"></trkpt>
+    <trkpt lat="-34.60651" lon="-58.43273"></trkpt>
+    <trkpt lat="-34.60661" lon="-58.43272"></trkpt>
+    <trkpt lat="-34.60681" lon="-58.43271"></trkpt>
+    <trkpt lat="-34.60698" lon="-58.43272"></trkpt>
+    <trkpt lat="-34.60713" lon="-58.43274"></trkpt>
+    <trkpt lat="-34.60727" lon="-58.43278"></trkpt>
+    <trkpt lat="-34.60749" lon="-58.43287"></trkpt>
+    <trkpt lat="-34.60767" lon="-58.43298"></trkpt>
+    <trkpt lat="-34.60769" lon="-58.43299"></trkpt>
+    <trkpt lat="-34.60786" lon="-58.4331"></trkpt>
+    <trkpt lat="-34.60805" lon="-58.43325"></trkpt>
+    <trkpt lat="-34.60818" lon="-58.43341"></trkpt>
+    <trkpt lat="-34.60855" lon="-58.43393"></trkpt>
+    <trkpt lat="-34.60874" lon="-58.4342"></trkpt>
+    <trkpt lat="-34.60874" lon="-58.43432"></trkpt>
+    <trkpt lat="-34.60875" lon="-58.43462"></trkpt>
+    <trkpt lat="-34.60876" lon="-58.43549"></trkpt>
+    <trkpt lat="-34.60878" lon="-58.43613"></trkpt>
+    <trkpt lat="-34.60878" lon="-58.43613"></trkpt>
+    <trkpt lat="-34.60981" lon="-58.43582"></trkpt>
+  </trkseg>
+</trk>
+</gpx>
