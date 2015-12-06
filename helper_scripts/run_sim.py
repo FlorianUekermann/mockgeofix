@@ -2,8 +2,6 @@
 
 # GPX from google maps route: http://www.gpsvisualizer.com/convert_input
 
-### bundled packages
-import gpxdata
 ### stdlib packages
 import os
 import socket
@@ -13,6 +11,15 @@ import select
 import time
 import threading
 import thread
+### external deps
+try:
+    import dateutil.parser
+    assert dateutil.parser  # pyflakes
+except ImportError:
+    print("package \"python-dateutil\" is required. exiting")
+    sys.exit(2)
+### bundled packages
+import gpxdata
 ###
 
 INDEX = "/whereami/whereami.html"
