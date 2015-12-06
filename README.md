@@ -23,7 +23,7 @@ This script also supports optional live visualization of the simulated route in 
 with web visualization ...
 
 1. run MockGeoFix on your phone
-2. run `./run_sim.py -i <your_phone_ip> -g your_gpx_file.gpx -I 127.0.0.1 -P 8080 -S 20`
+2. run `./run_sim.py -i <your_phone_ip> -g your_gpx_file.gpx -I 127.0.0.1 -P 8080 -s 20`
   - NOTE: -S 20 will simulate 20km/h speed
 3. open http://127.0.0.1:8080 in your web browser
 
