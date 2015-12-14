@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # GPX from google maps route: http://www.gpsvisualizer.com/convert_input
+# Or export directly from http://map.project-osrm.org
 
 ### stdlib packages
 import os
@@ -23,7 +24,7 @@ import gpxdata
 ###
 
 INDEX = "/whereami/whereami.html"
-UPDATE_INTERVAL = 0.1
+UPDATE_INTERVAL = 0.3
 
 curr_lat = 48.7833  # updated by main thread, read by http and geofix threads
 curr_lon = 9.1833   # updated by main thread, read by http and geofix threads

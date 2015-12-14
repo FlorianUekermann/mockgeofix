@@ -31,4 +31,4 @@ with web visualization ...
 
 NOTE: You can use http://www.gpsvisualizer.com/convert_input to convert directions from google
 maps to GPX (just copy the URL from google maps to the 'Or provide the URL of a file on the Web: '
-field in gpsvisualizer converter).
+field in gpsvisualizer converter). Alternatively, simply export GPX from http://map.project-osrm.org/ .
