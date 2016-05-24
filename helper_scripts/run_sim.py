@@ -130,6 +130,10 @@ def start_geofix(args):
             rlist, wlist, _ = select.select([s], [s], [])
             if s in rlist:
                 x = s.recv(1024)
+                if "KO: password required" in x:
+                    s.close()
+                    print("Password protection is enabled MockGeoFix settings. This is not supported.")
+                    sys.exit(2)
                 if x == '':
                     s.close()
                     print("Connection closed.")
