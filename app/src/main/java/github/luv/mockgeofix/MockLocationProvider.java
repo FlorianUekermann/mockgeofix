@@ -1,19 +1,20 @@
 package github.luv.mockgeofix;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class MockLocationProvider {
+public class MockLocationProvider implements SharedPreferences.OnSharedPreferenceChangeListener {
     static String TAG = "MockLocationProvider";
     //static String locationProviderName = "MockGeoFix";
     static String locationProviderName = LocationManager.GPS_PROVIDER;
-    static int accuracy = 1;
 
     static private MockLocationProvider instance = new MockLocationProvider();
     static public MockLocationProvider getInstance() { return instance; }
@@ -21,6 +22,8 @@ public class MockLocationProvider {
 
     protected Context mContext;
     protected LocationManager mLocationManager;
+    protected SharedPreferences mPref = null;
+    protected int accuracy = 1;
 
     static public void init(Context context) {
         getInstance()._init(context);
@@ -61,6 +64,16 @@ public class MockLocationProvider {
         }
         mContext = context;
         mLocationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        mPref = PreferenceManager.getDefaultSharedPreferences(context);
+        mPref.registerOnSharedPreferenceChangeListener(this);
+        accuracy = parseAccuracy();
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals("accuracy")) {
+            accuracy = parseAccuracy();
+        }
     }
 
     protected void _register() {
@@ -119,5 +132,16 @@ public class MockLocationProvider {
         }
     }
 
+    private int parseAccuracy() {
+        String str = mPref.getString("accuracy", "1");
+        int ret;
+        try {
+            ret = Integer.parseInt(str);
+        } catch (NumberFormatException ex) {
+            Log.e(TAG, String.format("Invalid accuracy %s. Defaulting to 1", str));
+            ret = 1;
+        }
+        return ret;
+    }
 
 }

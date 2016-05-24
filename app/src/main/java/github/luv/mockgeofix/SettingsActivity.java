@@ -60,6 +60,7 @@ public class SettingsActivity extends PreferenceActivity
         mInitialBinding = true;
         bindPreference(findPreference("listen_port"));
         bindPreference(findPreference("listen_ip"));
+        bindPreference(findPreference("accuracy"));
         bindPreference(findPreference("password"));
         bindPreference(findPreference("require_password"));
         mInitialBinding = false;

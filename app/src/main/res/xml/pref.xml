@@ -13,6 +13,15 @@
         android:defaultValue="ALL"
     />
 
+    <EditTextPreference
+        android:key="accuracy"
+        android:title="@string/accuracy"
+        android:defaultValue="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:inputType="number"
+        />
+
     <PreferenceCategory
         android:title="@string/pref_header_security"
         android:key="pref_cat_security">

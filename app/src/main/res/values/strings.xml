@@ -32,6 +32,7 @@
     <string name="notifications_on">Show notifications</string>
     <string name="listen_port">Listen TCP port</string>
     <string name="listen_ip">Listen IP</string>
+    <string name="accuracy">Accuracy</string>
     <string name="password">Set password</string>
     <string name="require_password">Require password</string>
     <string name="require_password_summary"><b>WARNING:
