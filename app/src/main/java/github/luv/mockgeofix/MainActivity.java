@@ -108,16 +108,6 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
         registerReceiver(receiver, new IntentFilter(MockLocationService.STOPPED));
         registerReceiver(receiver, new IntentFilter(MockLocationService.ERROR));
 
-        // show a dialog when "allow mock location" is not enabled
-        if (Settings.Secure.getString(getApplicationContext().getContentResolver(),
-                Settings.Secure.ALLOW_MOCK_LOCATION).equals("0")) {
-            if ( ! ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown ) {
-                ((MockGeoFixApp)getApplication()).enableMockLocationDialogShown = true;
-                (new EnableMockLocationDialogFragment()).show(getSupportFragmentManager(),
-                        "enable_mock_location_dialog");
-            }
-        }
-
         // show a dialog when other location providers apart from the GPS one are enabled
         LocationManager locationManager =
                 (LocationManager) getSystemService(Context.LOCATION_SERVICE);

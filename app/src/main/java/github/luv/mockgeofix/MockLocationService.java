@@ -199,10 +199,6 @@ class MockLocationThread extends Thread {
             } catch (SecurityException ex) {
                 Log.e(TAG, "WakeLock not acquired - permission denied for WakeLock.");
             }
-            if ( mContext.checkCallingOrSelfPermission("android.permission.ACCESS_MOCK_LOCATION")
-                  != PackageManager.PERMISSION_GRANTED) {
-                throw new SecurityException("Permission denied for android.permission.ACCESS_MOCK_LOCATION");
-            }
             MockLocationProvider.register();
             mService.threadHasStartedSuccessfully();
 
